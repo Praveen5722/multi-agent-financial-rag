@@ -1,5 +1,5 @@
 import "dotenv/config";
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import multer from "multer";
 import pdf from "pdf-parse";
@@ -129,7 +129,7 @@ app.get("/api/analyses", async (_req, res, next) => {
   } catch (error) { next(error); }
 });
 
-app.use((error: unknown, _req: Request, res: Response, _next: express.NextFunction) => {
+app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   const message = error instanceof Error ? error.message : "Unexpected server error";
   console.error(error);
   res.status(500).json({ error: message });
