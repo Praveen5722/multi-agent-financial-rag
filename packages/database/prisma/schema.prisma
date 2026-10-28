@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Document {
+  id          String          @id @default(cuid())
+  filename    String
+  mimeType    String          @default("application/pdf")
+  fileSize    Int
+  pageCount   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  chunks      DocumentChunk[]
+}
+
+model DocumentChunk {
+  id          String     @id @default(cuid())
+  documentId  String
+  page        Int
+  chunkIndex  Int
+  content     String     @db.Text
+  createdAt   DateTime   @default(now())
+  document    Document   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  evidence    Evidence[]
+  @@unique([documentId, page, chunkIndex])
+  @@index([documentId])
+}
+
+model Analysis {
+  id                String        @id @default(cuid())
+  question          String        @db.Text
+  company           String?
+  executiveSummary  String        @db.Text
+  validationStatus  String        @default("needs_more_evidence")
+  sourceCoverage    Float         @default(0)
+  createdAt         DateTime      @default(now())
+  evidence           Evidence[]
+  calculations       Calculation[]
+  risks              Risk[]
+  agentRuns          AgentRun[]
+  @@index([createdAt])
+}
+
+model Evidence {
+  id            String         @id @default(cuid())
+  analysisId    String
+  chunkId       String?
+  sourceId      String
+  filename      String
+  page          Int?
+  excerpt       String         @db.Text
+  score         Float          @default(0)
+  analysis      Analysis       @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  chunk         DocumentChunk? @relation(fields: [chunkId], references: [id], onDelete: SetNull)
+  @@index([analysisId])
+}
+
+model Calculation {
+  id          String    @id @default(cuid())
+  analysisId  String
+  name        String
+  value       Float?
+  unit        String    @default("")
+  formula     String
+  sourceIds   String[]
+  analysis    Analysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  @@index([analysisId])
+}
+
+model Risk {
+  id          String    @id @default(cuid())
+  analysisId  String
+  category    String
+  level       String
+  detail      String    @db.Text
+  analysis    Analysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  @@index([analysisId])
+}
+
+model AgentRun {
+  id          String    @id @default(cuid())
+  analysisId  String
+  name        String
+  status      String
+  summary     String    @db.Text
+  durationMs  Int?
+  createdAt   DateTime  @default(now())
+  analysis    Analysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  @@index([analysisId])
+}
