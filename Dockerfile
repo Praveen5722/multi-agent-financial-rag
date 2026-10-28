@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:20-bookworm-slim AS base
 WORKDIR /workspace
 RUN corepack enable
 COPY package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
@@ -7,7 +7,7 @@ COPY apps/web/package.json apps/web/package.json
 COPY packages/database/package.json packages/database/package.json
 RUN pnpm install
 COPY . .
-RUN pnpm --filter @finrag/database db:generate
+RUN pnpm --filter @finrag/database db:generate && pnpm --filter @finrag/database build
 
 FROM base AS api
 EXPOSE 8000
